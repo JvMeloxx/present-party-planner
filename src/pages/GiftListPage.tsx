@@ -63,7 +63,9 @@ export default function GiftListPage() {
           {data.items.length === 0 ? (
             <div className="col-span-2 text-center text-gray-500 py-20">Ainda não há presentes cadastrados nesta lista.</div>
           ) : (
-            data.items.map((item) => <GiftCard key={item.id} gift={item} />)
+            data.items.map((item) => (
+              <GiftCard key={item.id} gift={item} onReserved={() => setRefreshIndex(i => i + 1)} />
+            ))
           )}
         </div>
       </div>
