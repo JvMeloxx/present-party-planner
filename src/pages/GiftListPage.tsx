@@ -1,10 +1,11 @@
-
 import { useParams, Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Gift, GiftList } from "../types/gift";
 import { GiftCard } from "../components/GiftCard";
 import { ArrowLeft } from "lucide-react";
+import GiftItemForm from "../components/GiftItemForm";
+import { useState } from "react";
 
 const fetchGiftList = async (id: string) => {
   // Busca dados da lista
@@ -28,11 +29,15 @@ const fetchGiftList = async (id: string) => {
 
 export default function GiftListPage() {
   const { id = "" } = useParams<{ id: string }>();
+  const [refreshIndex, setRefreshIndex] = useState(0);
   const { data, error, isLoading } = useQuery({
-    queryKey: ["gift-list", id],
+    queryKey: ["gift-list", id, refreshIndex],
     queryFn: () => fetchGiftList(id || ""),
     enabled: !!id,
   });
+
+  // Dono mockado para demo. Troque depois por id do usuário autenticado!
+  const isOwner = data?.list?.owner_id === "00000000-0000-0000-0000-000000000000";
 
   if (isLoading) return <div className="flex justify-center py-10">Carregando...</div>;
   if (error) return <div className="flex justify-center py-10 text-red-500">Erro ao carregar lista de presentes.</div>;
@@ -47,6 +52,12 @@ export default function GiftListPage() {
         <h1 className="text-3xl font-bold text-purple-800 mb-2">{data.list.title}</h1>
         {data.list.description && (
           <p className="text-gray-700 mb-6">{data.list.description}</p>
+        )}
+        {isOwner && (
+          <GiftItemForm
+            listId={data.list.id}
+            onGiftAdded={() => setRefreshIndex(i => i + 1)}
+          />
         )}
         <div className="grid md:grid-cols-2 gap-6">
           {data.items.length === 0 ? (
