@@ -1,4 +1,3 @@
-
 import LandingHeader from "@/components/LandingHeader";
 import LandingFooter from "@/components/LandingFooter";
 import HowItWorks from "@/components/HowItWorks";
@@ -7,6 +6,8 @@ import Testimonials from "@/components/Testimonials";
 // Imagem: celebração de presentes
 const heroImage =
   "https://images.unsplash.com/photo-1721322800607-8c38375eef04?auto=format&fit=crop&w=900&q=80";
+
+const dummyListId = "00000000-0000-0000-0000-000000000001"; // Substitua por um ID real depois de criar uma lista
 
 const Index = () => {
   return (
@@ -73,6 +74,14 @@ const Index = () => {
                   <li>Quadros decorativos</li>
                   <li>Toalha de mesa</li>
                 </ul>
+                <div className="mt-4">
+                  <a
+                    href={`/lista/${dummyListId}`}
+                    className="inline-block bg-gradient-to-r from-pink-500 via-purple-500 to-purple-600 hover:scale-105 shadow-lg text-white px-6 py-2 rounded-full font-semibold text-base transition-all duration-200"
+                  >
+                    Ver página de lista real
+                  </a>
+                </div>
               </div>
             </div>
           </div>
