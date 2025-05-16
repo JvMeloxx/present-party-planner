@@ -7,6 +7,7 @@ import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import GiftListPage from "./pages/GiftListPage";
 import CreateGiftListPage from "./pages/CreateGiftListPage";
+import MyListsPage from "./pages/MyListsPage";
 
 const queryClient = new QueryClient();
 
@@ -20,6 +21,7 @@ const App = () => (
           <Route path="/" element={<Index />} />
           <Route path="/criar-lista" element={<CreateGiftListPage />} />
           <Route path="/lista/:id" element={<GiftListPage />} />
+          <Route path="/minhas-listas" element={<MyListsPage />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
