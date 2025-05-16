@@ -25,10 +25,10 @@ const Index = () => {
               Gerencie, personalize e compartilhe suas listas para chá de panela, casa nova, bebê e muito mais. Zero complicação para você e seus convidados!
             </p>
             <a
-              href="#"
+              href="/criar-lista"
               className="inline-block bg-gradient-to-r from-pink-500 via-purple-500 to-purple-600 hover:scale-105 shadow-lg text-white px-8 py-4 rounded-full font-bold text-lg transition-all duration-200 animate-scale-in"
             >
-              Crie sua lista agora
+              Criar lista agora
             </a>
           </div>
           <div className="flex-1 flex justify-center">
