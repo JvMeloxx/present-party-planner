@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
@@ -15,7 +14,7 @@ export default function CreateGiftListPage() {
   const [description, setDescription] = useState("");
   const [isPublic, setIsPublic] = useState(true);
   const [loading, setLoading] = useState(false);
-  const [eventDate, setEventDate] = useState(""); // Novo campo para data
+  const [eventDate, setEventDate] = useState(""); // Campo de data do evento
 
   const navigate = useNavigate();
 
@@ -30,18 +29,18 @@ export default function CreateGiftListPage() {
     // Por enquanto, owner_id é mock (depois trocar para o id do usuário logado)
     const owner_id = "00000000-0000-0000-0000-000000000000";
 
-    // Enviar também a data do evento se preenchida (futura evolução: salvar na tabela)
+    // Monta o objeto de inserção
+    const insertObj: any = {
+      title,
+      description: description.trim() || null,
+      is_public: isPublic,
+      owner_id,
+    };
+    if (eventDate) insertObj.event_date = eventDate;
+
     const { data, error } = await supabase
       .from("gift_lists")
-      .insert([
-        {
-          title,
-          description: description.trim() || null,
-          is_public: isPublic,
-          owner_id,
-          // No Supabase, a tabela ainda não tem o campo "event_date", então só incluo aqui se após SQL migration
-        }
-      ])
+      .insert([insertObj])
       .select()
       .maybeSingle();
 

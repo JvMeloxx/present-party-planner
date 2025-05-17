@@ -6,6 +6,7 @@ export type GiftList = {
   description: string | null;
   created_at: string;
   is_public: boolean;
+  event_date?: string | null; // Suporta presença ou ausência do campo
 };
 
 export type Gift = {

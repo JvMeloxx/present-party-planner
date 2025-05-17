@@ -51,6 +51,7 @@ export type Database = {
         Row: {
           created_at: string | null
           description: string | null
+          event_date: string | null
           id: string
           is_public: boolean
           owner_id: string
@@ -59,6 +60,7 @@ export type Database = {
         Insert: {
           created_at?: string | null
           description?: string | null
+          event_date?: string | null
           id?: string
           is_public?: boolean
           owner_id: string
@@ -67,6 +69,7 @@ export type Database = {
         Update: {
           created_at?: string | null
           description?: string | null
+          event_date?: string | null
           id?: string
           is_public?: boolean
           owner_id?: string
