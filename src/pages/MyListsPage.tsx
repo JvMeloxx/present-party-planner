@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Copy, Edit, Trash2, PlusCircle, Share, Calendar } from "lucide-react";
@@ -56,10 +55,6 @@ function MyListsPage() {
       toast({ title: "Lista excluída", description: "A lista foi excluída com sucesso." });
       setRefreshIndex(i => i + 1);
     }
-  };
-
-  const handleEdit = (listId: string) => {
-    toast({ title: "Funcionalidade em breve!", description: "Em breve será possível editar a lista." });
   };
 
   const formatDate = (dateString: string | null) => {
@@ -134,9 +129,11 @@ function MyListsPage() {
                 <Button variant="ghost" onClick={() => handleCopy(list.id)} title="Copiar link">
                   <Copy size={18} />
                 </Button>
-                <Button variant="ghost" onClick={() => handleEdit(list.id)} title="Editar lista">
-                  <Edit size={18} />
-                </Button>
+                <Link to={`/editar-lista/${list.id}`}>
+                  <Button variant="ghost" title="Editar lista">
+                    <Edit size={18} />
+                  </Button>
+                </Link>
                 <Button variant="ghost" onClick={() => handleDelete(list.id)} title="Excluir lista">
                   <Trash2 size={18} />
                 </Button>

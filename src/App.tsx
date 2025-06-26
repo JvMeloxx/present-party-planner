@@ -9,6 +9,7 @@ import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import GiftListPage from "./pages/GiftListPage";
 import CreateGiftListPage from "./pages/CreateGiftListPage";
+import EditGiftListPage from "./pages/EditGiftListPage";
 import MyListsPage from "./pages/MyListsPage";
 import AuthPage from "./pages/AuthPage";
 import { supabase } from "@/integrations/supabase/client";
@@ -66,6 +67,14 @@ const App = () => (
             }
           />
           <Route
+            path="/editar-lista/:id"
+            element={
+              <ProtectedRoute>
+                <EditGiftListPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
             path="/lista/:id"
             element={<GiftListPage />}
           />
@@ -86,4 +95,3 @@ const App = () => (
 );
 
 export default App;
-
