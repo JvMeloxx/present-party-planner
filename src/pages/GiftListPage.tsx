@@ -1,4 +1,3 @@
-
 import { useParams, Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -175,6 +174,7 @@ export default function GiftListPage() {
                 key={item.id} 
                 gift={item} 
                 onReserved={() => setRefreshIndex(i => i + 1)} 
+                showActions={isOwner}
               />
             ))
           )}
