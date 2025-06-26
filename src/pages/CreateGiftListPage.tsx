@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
@@ -6,7 +7,6 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/components/ui/use-toast";
 import { Checkbox } from "@/components/ui/checkbox";
-// Importar o ícone do calendário para o campo de data
 import { Calendar } from "lucide-react";
 
 export default function CreateGiftListPage() {
@@ -14,7 +14,7 @@ export default function CreateGiftListPage() {
   const [description, setDescription] = useState("");
   const [isPublic, setIsPublic] = useState(true);
   const [loading, setLoading] = useState(false);
-  const [eventDate, setEventDate] = useState(""); // Campo de data do evento
+  const [eventDate, setEventDate] = useState("");
 
   const navigate = useNavigate();
 
@@ -26,15 +26,24 @@ export default function CreateGiftListPage() {
     }
     setLoading(true);
 
-    // Por enquanto, owner_id é mock (depois trocar para o id do usuário logado)
-    const owner_id = "00000000-0000-0000-0000-000000000000";
+    // Pega o usuário autenticado
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      toast({
+        variant: "destructive",
+        title: "Erro de autenticação",
+        description: "Você precisa estar logado para criar uma lista",
+      });
+      setLoading(false);
+      return;
+    }
 
     // Monta o objeto de inserção
     const insertObj: any = {
       title,
       description: description.trim() || null,
       is_public: isPublic,
-      owner_id,
+      owner_id: user.id,
     };
     if (eventDate) insertObj.event_date = eventDate;
 

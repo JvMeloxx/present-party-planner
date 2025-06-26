@@ -6,7 +6,7 @@ import { Gift, GiftList } from "../types/gift";
 import { GiftCard } from "../components/GiftCard";
 import { ArrowLeft, Calendar } from "lucide-react";
 import GiftItemForm from "../components/GiftItemForm";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 const fetchGiftList = async (id: string) => {
   // Busca dados da lista
@@ -31,14 +31,25 @@ const fetchGiftList = async (id: string) => {
 export default function GiftListPage() {
   const { id = "" } = useParams<{ id: string }>();
   const [refreshIndex, setRefreshIndex] = useState(0);
+  const [currentUser, setCurrentUser] = useState<any>(null);
+  
   const { data, error, isLoading } = useQuery({
     queryKey: ["gift-list", id, refreshIndex],
     queryFn: () => fetchGiftList(id || ""),
     enabled: !!id,
   });
 
-  // Dono mockado para demo. Troque depois por id do usuário autenticado!
-  const isOwner = data?.list?.owner_id === "00000000-0000-0000-0000-000000000000";
+  // Verifica o usuário atual
+  useEffect(() => {
+    const getCurrentUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      setCurrentUser(user);
+    };
+    getCurrentUser();
+  }, []);
+
+  // Verifica se o usuário atual é o dono da lista
+  const isOwner = currentUser && data?.list?.owner_id === currentUser.id;
 
   const formatDate = (dateString: string | null) => {
     if (!dateString) return null;

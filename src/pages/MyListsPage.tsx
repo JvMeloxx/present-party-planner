@@ -9,13 +9,14 @@ import { supabase } from "@/integrations/supabase/client";
 import { GiftList } from "@/types/gift";
 
 const fetchUserLists = async (): Promise<GiftList[]> => {
-  // Por enquanto, usa o owner_id mockado. Depois trocar pelo auth.uid()
-  const owner_id = "00000000-0000-0000-0000-000000000000";
+  // Pega o usuário autenticado
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error("Usuário não autenticado");
   
   const { data, error } = await supabase
     .from("gift_lists")
     .select("*")
-    .eq("owner_id", owner_id)
+    .eq("owner_id", user.id)
     .order("created_at", { ascending: false });
 
   if (error) throw error;
