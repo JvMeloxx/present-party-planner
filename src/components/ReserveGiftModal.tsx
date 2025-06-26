@@ -13,6 +13,13 @@ type ReserveGiftModalProps = {
   onReserved: () => void;
 };
 
+// Define the expected return type from the RPC function
+type ReserveGiftResponse = {
+  success: boolean;
+  error?: string;
+  message?: string;
+};
+
 export function ReserveGiftModal({ open, onClose, giftId, onReserved }: ReserveGiftModalProps) {
   const [name, setName] = useState("");
   const [loading, setLoading] = useState(false);
@@ -65,14 +72,17 @@ export function ReserveGiftModal({ open, onClose, giftId, onReserved }: ReserveG
         return;
       }
 
-      if (!data.success) {
-        setError(data.error || "Erro desconhecido ao reservar presente");
+      // Type assertion to handle the Json type from Supabase
+      const response = data as ReserveGiftResponse;
+
+      if (!response.success) {
+        setError(response.error || "Erro desconhecido ao reservar presente");
         return;
       }
 
       toast({ 
         title: "Presente reservado! 🎁", 
-        description: data.message || "Obrigado por escolher presentear! O dono da lista será notificado." 
+        description: response.message || "Obrigado por escolher presentear! O dono da lista será notificado." 
       });
       
       setName("");
