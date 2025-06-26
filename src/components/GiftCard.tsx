@@ -27,6 +27,21 @@ export function GiftCard({ gift, onReserved, showActions = false }: {
   
   return (
     <div className="bg-white rounded-xl border-2 border-purple-100 p-6 shadow-sm relative flex flex-col gap-3">
+      {/* Imagem do presente */}
+      {gift.image_url && (
+        <div className="w-full h-48 rounded-lg overflow-hidden mb-3">
+          <img
+            src={gift.image_url}
+            alt={gift.name}
+            className="w-full h-full object-cover"
+            onError={(e) => {
+              // Remove a imagem se houver erro ao carregar
+              e.currentTarget.style.display = 'none';
+            }}
+          />
+        </div>
+      )}
+
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <GiftIcon className="text-purple-400" size={22} />

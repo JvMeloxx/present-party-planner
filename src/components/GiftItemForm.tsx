@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/components/ui/use-toast";
+import { ImageUpload } from "./ImageUpload";
 
 type Props = {
   listId: string;
@@ -14,6 +15,7 @@ type Props = {
 export default function GiftItemForm({ listId, onGiftAdded }: Props) {
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
+  const [imageUrl, setImageUrl] = useState("");
   const [loading, setLoading] = useState(false);
 
   async function handleSubmit(e: React.FormEvent) {
@@ -27,6 +29,7 @@ export default function GiftItemForm({ listId, onGiftAdded }: Props) {
       list_id: listId,
       name,
       description: description.trim() || null,
+      image_url: imageUrl || null,
     }]);
     setLoading(false);
 
@@ -36,21 +39,35 @@ export default function GiftItemForm({ listId, onGiftAdded }: Props) {
     }
     setName("");
     setDescription("");
+    setImageUrl("");
     toast({ title: "Presente adicionado!", description: "Seu presente foi incluído na lista." });
-    onGiftAdded(); // Atualiza a lista de presentes
+    onGiftAdded();
   }
 
   return (
     <form onSubmit={handleSubmit} className="mb-8 bg-white p-5 rounded-xl shadow border flex flex-col gap-5">
       <h2 className="text-xl font-semibold text-purple-800">Adicionar novo presente</h2>
+      
       <div>
         <label htmlFor="gift-name" className="block font-medium text-gray-700 mb-1">Nome do presente <span className="text-pink-600">*</span></label>
         <Input id="gift-name" placeholder="Ex: Fraldas Pampers" value={name} onChange={e => setName(e.target.value)} disabled={loading} required />
       </div>
+      
       <div>
         <label htmlFor="gift-description" className="block font-medium text-gray-700 mb-1">Descrição (opcional)</label>
         <Textarea id="gift-description" placeholder="Tamanho G ou M, pacote com 30 unidades, etc." value={description} onChange={e => setDescription(e.target.value)} disabled={loading} />
       </div>
+      
+      <div>
+        <label className="block font-medium text-gray-700 mb-2">Imagem do presente (opcional)</label>
+        <ImageUpload
+          onImageUploaded={setImageUrl}
+          currentImageUrl={imageUrl}
+          onImageRemoved={() => setImageUrl("")}
+          disabled={loading}
+        />
+      </div>
+      
       <Button type="submit" disabled={loading}>
         {loading ? "Adicionando..." : "Adicionar presente"}
       </Button>

@@ -6,7 +6,7 @@ export type GiftList = {
   description: string | null;
   created_at: string;
   is_public: boolean;
-  event_date?: string | null; // Suporta presença ou ausência do campo
+  event_date?: string | null;
 };
 
 export type Gift = {
@@ -17,4 +17,5 @@ export type Gift = {
   reserver_name: string | null;
   reserved_at: string | null;
   created_at: string;
+  image_url: string | null;
 };
