@@ -4,6 +4,7 @@ import { Gift as GiftIcon, Check, User, Plus } from "lucide-react";
 import { useState, useEffect } from "react";
 import { ReserveGiftModal } from "./ReserveGiftModal";
 import { GiftCardActions } from "./GiftCardActions";
+import { ReservationDetails } from "./ReservationDetails";
 import { supabase } from "@/integrations/supabase/client";
 
 export function GiftCard({ gift, onReserved, showActions = false }: { 
@@ -41,11 +42,18 @@ export function GiftCard({ gift, onReserved, showActions = false }: {
       )}
 
       {isReserved ? (
-        <div className="flex items-center gap-2 mt-2 text-green-600 text-sm font-medium bg-green-50 p-3 rounded-lg">
-          <Check size={16} /> 
-          <span>Reservado por</span>
-          <User className="ml-1" size={14} /> 
-          <span className="font-semibold">{gift.reserver_name}</span>
+        <div className="flex flex-col gap-2 mt-2">
+          <div className="flex items-center gap-2 text-green-600 text-sm font-medium bg-green-50 p-3 rounded-lg">
+            <Check size={16} /> 
+            <span>Reservado por</span>
+            <User className="ml-1" size={14} /> 
+            <span className="font-semibold">{gift.reserver_name}</span>
+          </div>
+          
+          {/* Mostrar detalhes da reserva apenas para o dono da lista */}
+          {showActions && (
+            <ReservationDetails gift={gift} />
+          )}
         </div>
       ) : (
         <div className="flex flex-col gap-3 mt-2">

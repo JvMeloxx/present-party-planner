@@ -1,11 +1,15 @@
+
 import { useParams, Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Gift, GiftList } from "../types/gift";
 import { GiftCard } from "../components/GiftCard";
-import { ArrowLeft, Calendar, Share2, Users } from "lucide-react";
+import { ListStats } from "../components/ListStats";
+import { GiftSearch } from "../components/GiftSearch";
+import { ShareButtons } from "../components/ShareButtons";
+import { ArrowLeft, Calendar, Users } from "lucide-react";
 import GiftItemForm from "../components/GiftItemForm";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/components/ui/use-toast";
 
@@ -33,6 +37,9 @@ export default function GiftListPage() {
   const { id = "" } = useParams<{ id: string }>();
   const [refreshIndex, setRefreshIndex] = useState(0);
   const [currentUser, setCurrentUser] = useState<any>(null);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [filter, setFilter] = useState<'all' | 'available' | 'reserved'>('all');
+  const [sort, setSort] = useState<'name' | 'date' | 'status'>('name');
   
   const { data, error, isLoading } = useQuery({
     queryKey: ["gift-list", id, refreshIndex],
@@ -51,6 +58,46 @@ export default function GiftListPage() {
 
   // Verifica se o usuário atual é o dono da lista
   const isOwner = currentUser && data?.list?.owner_id === currentUser.id;
+
+  // Filtrar e ordenar presentes
+  const filteredAndSortedGifts = useMemo(() => {
+    if (!data?.items) return [];
+    
+    let filtered = data.items;
+    
+    // Aplicar busca
+    if (searchTerm) {
+      filtered = filtered.filter(gift => 
+        gift.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (gift.description && gift.description.toLowerCase().includes(searchTerm.toLowerCase()))
+      );
+    }
+    
+    // Aplicar filtro
+    if (filter === 'available') {
+      filtered = filtered.filter(gift => !gift.reserver_name);
+    } else if (filter === 'reserved') {
+      filtered = filtered.filter(gift => gift.reserver_name);
+    }
+    
+    // Aplicar ordenação
+    const sorted = [...filtered].sort((a, b) => {
+      switch (sort) {
+        case 'name':
+          return a.name.localeCompare(b.name);
+        case 'date':
+          return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+        case 'status':
+          if (a.reserver_name && !b.reserver_name) return -1;
+          if (!a.reserver_name && b.reserver_name) return 1;
+          return 0;
+        default:
+          return 0;
+      }
+    });
+    
+    return sorted;
+  }, [data?.items, searchTerm, filter, sort]);
 
   const formatDate = (dateString: string | null) => {
     if (!dateString) return null;
@@ -106,26 +153,22 @@ export default function GiftListPage() {
 
   const reservedCount = data.items.filter(item => item.reserver_name).length;
   const totalCount = data.items.length;
+  const currentUrl = window.location.href;
 
   return (
     <div className="min-h-screen bg-purple-50">
-      <div className="max-w-2xl mx-auto py-10 px-4">
+      <div className="max-w-4xl mx-auto py-10 px-4">
         <Link to="/" className="inline-flex items-center gap-2 mb-6 text-gray-600 hover:text-purple-600 font-medium transition-colors">
           <ArrowLeft size={20} /> Voltar
         </Link>
         
         <div className="bg-white rounded-xl p-6 shadow-sm border mb-8">
-          <div className="flex items-start justify-between mb-4">
+          <div className="flex flex-col sm:flex-row sm:items-start justify-between mb-4 gap-4">
             <h1 className="text-3xl font-bold text-purple-800">{data.list.title}</h1>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleCopyLink}
-              className="flex items-center gap-2"
-            >
-              <Share2 size={16} />
-              Compartilhar
-            </Button>
+            <ShareButtons 
+              listTitle={data.list.title}
+              listUrl={currentUrl}
+            />
           </div>
           
           {data.list.description && (
@@ -153,10 +196,26 @@ export default function GiftListPage() {
           </div>
         </div>
         
+        {/* Estatísticas - apenas para o dono */}
+        {isOwner && totalCount > 0 && (
+          <ListStats gifts={data.items} />
+        )}
+        
         {isOwner && (
           <GiftItemForm
             listId={data.list.id}
             onGiftAdded={() => setRefreshIndex(i => i + 1)}
+          />
+        )}
+        
+        {/* Busca e filtros - apenas se houver presentes */}
+        {totalCount > 0 && (
+          <GiftSearch
+            onSearch={setSearchTerm}
+            onFilter={setFilter}
+            onSort={setSort}
+            currentFilter={filter}
+            currentSort={sort}
           />
         )}
         
@@ -168,8 +227,13 @@ export default function GiftListPage() {
                 <p className="text-sm">Aguarde o dono da lista adicionar os presentes desejados.</p>
               )}
             </div>
+          ) : filteredAndSortedGifts.length === 0 ? (
+            <div className="col-span-2 text-center text-gray-500 py-20 bg-white rounded-xl">
+              <p className="text-lg mb-2">Nenhum presente encontrado com os filtros aplicados.</p>
+              <p className="text-sm">Tente ajustar sua busca ou filtros.</p>
+            </div>
           ) : (
-            data.items.map((item) => (
+            filteredAndSortedGifts.map((item) => (
               <GiftCard 
                 key={item.id} 
                 gift={item} 

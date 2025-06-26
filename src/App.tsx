@@ -11,6 +11,7 @@ import GiftListPage from "./pages/GiftListPage";
 import CreateGiftListPage from "./pages/CreateGiftListPage";
 import EditGiftListPage from "./pages/EditGiftListPage";
 import MyListsPage from "./pages/MyListsPage";
+import SettingsPage from "./pages/SettingsPage";
 import AuthPage from "./pages/AuthPage";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -83,6 +84,14 @@ const App = () => (
             element={
               <ProtectedRoute>
                 <MyListsPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/configuracoes"
+            element={
+              <ProtectedRoute>
+                <SettingsPage />
               </ProtectedRoute>
             }
           />
