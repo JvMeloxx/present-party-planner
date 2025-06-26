@@ -2,143 +2,94 @@
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/components/ui/use-toast";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Calendar } from "lucide-react";
+import { GiftListForm } from "@/components/GiftListForm";
 
 export default function CreateGiftListPage() {
-  const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
-  const [isPublic, setIsPublic] = useState(true);
   const [loading, setLoading] = useState(false);
-  const [eventDate, setEventDate] = useState("");
-
   const navigate = useNavigate();
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    if (!title.trim()) {
-      toast({ title: "Preencha o nome da lista", description: "O campo Nome é obrigatório", variant: "destructive" });
-      return;
-    }
+  async function handleSubmit(formData: {
+    title: string;
+    description: string;
+    isPublic: boolean;
+    eventDate: string;
+  }) {
     setLoading(true);
 
-    // Pega o usuário autenticado
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
+    try {
+      // Get authenticated user
+      const { data: { user }, error: authError } = await supabase.auth.getUser();
+      if (authError || !user) {
+        toast({
+          variant: "destructive",
+          title: "Erro de autenticação",
+          description: "Você precisa estar logado para criar uma lista",
+        });
+        return;
+      }
+
+      // Prepare insert object
+      const insertObj: any = {
+        title: formData.title,
+        description: formData.description || null,
+        is_public: formData.isPublic,
+        owner_id: user.id,
+      };
+      
+      if (formData.eventDate) {
+        insertObj.event_date = formData.eventDate;
+      }
+
+      const { data, error } = await supabase
+        .from("gift_lists")
+        .insert([insertObj])
+        .select()
+        .maybeSingle();
+
+      if (error || !data) {
+        console.error("Error creating list:", error);
+        toast({
+          variant: "destructive",
+          title: "Erro ao criar lista",
+          description: "Verifique os dados e tente novamente",
+        });
+        return;
+      }
+
+      toast({
+        title: "Lista criada!",
+        description: "Redirecionando para a sua lista...",
+      });
+
+      setTimeout(() => {
+        navigate(`/lista/${data.id}`);
+      }, 800);
+
+    } catch (error) {
+      console.error("Unexpected error:", error);
       toast({
         variant: "destructive",
-        title: "Erro de autenticação",
-        description: "Você precisa estar logado para criar uma lista",
+        title: "Erro inesperado",
+        description: "Tente novamente em alguns instantes",
       });
+    } finally {
       setLoading(false);
-      return;
     }
-
-    // Monta o objeto de inserção
-    const insertObj: any = {
-      title,
-      description: description.trim() || null,
-      is_public: isPublic,
-      owner_id: user.id,
-    };
-    if (eventDate) insertObj.event_date = eventDate;
-
-    const { data, error } = await supabase
-      .from("gift_lists")
-      .insert([insertObj])
-      .select()
-      .maybeSingle();
-
-    setLoading(false);
-
-    if (error || !data) {
-      toast({
-        variant: "destructive",
-        title: "Erro ao criar lista",
-        description: error?.message || "Tente novamente ou contate o suporte",
-      });
-      return;
-    }
-
-    toast({
-      title: "Lista criada!",
-      description: "Redirecionando para a sua lista...",
-    });
-
-    setTimeout(() => {
-      navigate(`/lista/${data.id}`);
-    }, 800);
   }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 to-white flex items-center justify-center">
-      <form
-        className="max-w-lg w-full bg-white rounded-2xl shadow-lg p-8 border-2 border-purple-100 flex flex-col gap-6"
-        onSubmit={handleSubmit}
-      >
-        <h1 className="text-3xl font-bold text-purple-800 mb-2">Criar nova lista de presentes</h1>
-        <div>
-          <label htmlFor="title" className="block font-semibold text-gray-700 mb-1">
-            Nome da lista <span className="text-pink-600">*</span>
-          </label>
-          <Input
-            id="title"
-            placeholder="Chá de Bebê da Ana"
-            value={title}
-            onChange={e => setTitle(e.target.value)}
-            required
-            className="text-base"
-            disabled={loading}
-          />
-        </div>
-        <div>
-          <label htmlFor="description" className="block font-semibold text-gray-700 mb-1">
-            Descrição (opcional)
-          </label>
-          <Textarea
-            id="description"
-            placeholder="Ex: O evento será no dia 14/08, confira a lista e participe!"
-            value={description}
-            onChange={e => setDescription(e.target.value)}
-            className="text-base"
-            disabled={loading}
-          />
-        </div>
-        <div>
-          <label htmlFor="event-date" className="block font-semibold text-gray-700 mb-1">
-            Data do evento <span className="text-xs text-gray-400">(opcional)</span>
-          </label>
-          <div className="relative flex items-center">
-            <Input
-              id="event-date"
-              type="date"
-              value={eventDate}
-              onChange={e => setEventDate(e.target.value)}
-              className="text-base pr-10"
-              disabled={loading}
-            />
-            <Calendar className="absolute right-2 text-gray-400" size={20} />
-          </div>
-        </div>
-        <div className="flex items-center gap-2">
-          <Checkbox
-            id="isPublic"
-            checked={isPublic}
-            onCheckedChange={val => setIsPublic(!!val)}
-            disabled={loading}
-          />
-          <label htmlFor="isPublic" className="text-gray-700 cursor-pointer">
-            Deixar minha lista pública para quem tiver o link
-          </label>
-        </div>
-        <Button type="submit" className="w-full mt-2" disabled={loading}>
-          {loading ? "Criando..." : "Criar lista"}
-        </Button>
-      </form>
+      <div className="max-w-lg w-full bg-white rounded-2xl shadow-lg p-8 border-2 border-purple-100">
+        <h1 className="text-3xl font-bold text-purple-800 mb-6">
+          Criar nova lista de presentes
+        </h1>
+        <GiftListForm
+          onSubmit={handleSubmit}
+          loading={loading}
+          submitLabel="Criar lista"
+        />
+      </div>
     </div>
   );
 }

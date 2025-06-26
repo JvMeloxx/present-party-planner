@@ -82,7 +82,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      reserve_gift_item: {
+        Args: { gift_id: string; reserver_name_param: string }
+        Returns: Json
+      }
     }
     Enums: {
       [_ in never]: never

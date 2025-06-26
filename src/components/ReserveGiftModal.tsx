@@ -16,57 +16,73 @@ type ReserveGiftModalProps = {
 export function ReserveGiftModal({ open, onClose, giftId, onReserved }: ReserveGiftModalProps) {
   const [name, setName] = useState("");
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const validateName = (name: string): string | null => {
+    const trimmedName = name.trim();
+    if (!trimmedName) {
+      return "Nome é obrigatório";
+    }
+    if (trimmedName.length > 100) {
+      return "Nome muito longo (máximo 100 caracteres)";
+    }
+    if (trimmedName.length < 2) {
+      return "Nome deve ter pelo menos 2 caracteres";
+    }
+    // Check for potentially malicious content
+    if (/<script|javascript:|data:/i.test(trimmedName)) {
+      return "Nome contém caracteres não permitidos";
+    }
+    return null;
+  };
 
   async function handleReserve() {
-    if (!name.trim()) {
-      toast({ 
-        title: "Nome obrigatório", 
-        description: "Por favor, informe seu nome para reservar o presente.", 
-        variant: "destructive" 
-      });
+    setError(null);
+    
+    const validationError = validateName(name);
+    if (validationError) {
+      setError(validationError);
       return;
     }
     
-    if (!giftId) return;
+    if (!giftId) {
+      setError("ID do presente não encontrado");
+      return;
+    }
     
     setLoading(true);
     
     try {
-      const { error } = await supabase
-        .from("gift_items")
-        .update({
-          reserver_name: name.trim(),
-          reserved_at: new Date().toISOString(),
-        })
-        .eq("id", giftId)
-        .is("reserver_name", null); // Garante que só reserva se ainda estiver disponível
+      // Use the new secure reservation function
+      const { data, error: rpcError } = await supabase.rpc('reserve_gift_item', {
+        gift_id: giftId,
+        reserver_name_param: name.trim()
+      });
 
-      if (error) {
-        console.error("Erro ao reservar presente:", error);
-        toast({ 
-          title: "Erro ao reservar presente", 
-          description: "Tente novamente ou verifique se o presente ainda está disponível.", 
-          variant: "destructive" 
-        });
+      if (rpcError) {
+        console.error("Erro RPC ao reservar presente:", rpcError);
+        setError("Erro interno. Tente novamente.");
+        return;
+      }
+
+      if (!data.success) {
+        setError(data.error || "Erro desconhecido ao reservar presente");
         return;
       }
 
       toast({ 
         title: "Presente reservado! 🎁", 
-        description: "Obrigado por escolher presentear! O dono da lista será notificado." 
+        description: data.message || "Obrigado por escolher presentear! O dono da lista será notificado." 
       });
       
       setName("");
+      setError(null);
       onReserved();
       onClose();
       
     } catch (error) {
       console.error("Erro inesperado:", error);
-      toast({ 
-        title: "Erro inesperado", 
-        description: "Tente novamente em alguns instantes.", 
-        variant: "destructive" 
-      });
+      setError("Erro inesperado. Tente novamente em alguns instantes.");
     } finally {
       setLoading(false);
     }
@@ -75,7 +91,18 @@ export function ReserveGiftModal({ open, onClose, giftId, onReserved }: ReserveG
   function handleClose() {
     if (!loading) {
       setName("");
+      setError(null);
       onClose();
+    }
+  }
+
+  function handleNameChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const newName = e.target.value;
+    setName(newName);
+    
+    // Clear error when user starts typing
+    if (error) {
+      setError(null);
     }
   }
 
@@ -89,20 +116,30 @@ export function ReserveGiftModal({ open, onClose, giftId, onReserved }: ReserveG
         </DialogHeader>
         <div className="flex flex-col gap-4 pt-4">
           <p className="text-gray-600 text-sm">
-            Informe seu nome para reservar este presente. O dono da lista será notificado da sua escolha.
+            Informe seu nome completo para reservar este presente. O dono da lista será notificado da sua escolha.
           </p>
-          <Input
-            placeholder="Seu nome completo"
-            value={name}
-            onChange={e => setName(e.target.value)}
-            disabled={loading}
-            autoFocus
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' && !loading && name.trim()) {
-                handleReserve();
-              }
-            }}
-          />
+          <div className="space-y-2">
+            <Input
+              placeholder="Seu nome completo"
+              value={name}
+              onChange={handleNameChange}
+              disabled={loading}
+              autoFocus
+              maxLength={100}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && !loading && !error && name.trim()) {
+                  handleReserve();
+                }
+              }}
+              className={error ? "border-red-500" : ""}
+            />
+            {error && (
+              <p className="text-sm text-red-600 flex items-center gap-1">
+                <span>⚠️</span>
+                {error}
+              </p>
+            )}
+          </div>
           <div className="flex gap-2">
             <Button 
               variant="outline" 
@@ -114,7 +151,7 @@ export function ReserveGiftModal({ open, onClose, giftId, onReserved }: ReserveG
             </Button>
             <Button 
               onClick={handleReserve} 
-              disabled={loading || !name.trim()} 
+              disabled={loading || !!error || !name.trim()} 
               className="flex-1"
             >
               {loading ? "Reservando..." : "Confirmar reserva"}
