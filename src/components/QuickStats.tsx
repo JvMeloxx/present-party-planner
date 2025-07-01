@@ -29,14 +29,14 @@ export function QuickStats({ gifts, eventDate }: QuickStatsProps) {
     {
       icon: Gift,
       label: "Total de presentes",
-      value: totalGifts,
+      value: totalGifts.toString(),
       color: "text-purple-600",
       bgColor: "bg-purple-50"
     },
     {
       icon: Users,
       label: "Já reservados",
-      value: reservedGifts,
+      value: reservedGifts.toString(),
       color: "text-green-600",
       bgColor: "bg-green-50"
     },
@@ -53,7 +53,7 @@ export function QuickStats({ gifts, eventDate }: QuickStatsProps) {
     stats.push({
       icon: Calendar,
       label: daysUntilEvent > 0 ? "Dias restantes" : daysUntilEvent === 0 ? "Hoje!" : "Evento passou",
-      value: daysUntilEvent > 0 ? daysUntilEvent : daysUntilEvent === 0 ? "🎉" : Math.abs(daysUntilEvent),
+      value: daysUntilEvent > 0 ? daysUntilEvent.toString() : daysUntilEvent === 0 ? "🎉" : Math.abs(daysUntilEvent).toString(),
       color: daysUntilEvent > 0 ? "text-orange-600" : daysUntilEvent === 0 ? "text-green-600" : "text-gray-600",
       bgColor: daysUntilEvent > 0 ? "bg-orange-50" : daysUntilEvent === 0 ? "bg-green-50" : "bg-gray-50"
     });
