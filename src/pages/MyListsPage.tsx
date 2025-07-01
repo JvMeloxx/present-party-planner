@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Copy, Edit, Trash2, PlusCircle, Share, Calendar } from "lucide-react";
@@ -6,6 +7,9 @@ import { toast } from "@/components/ui/use-toast";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { GiftList } from "@/types/gift";
+import Layout from "@/components/Layout";
+import Breadcrumbs from "@/components/Breadcrumbs";
+import LoadingSpinner from "@/components/LoadingSpinner";
 
 const fetchUserLists = async (): Promise<GiftList[]> => {
   // Pega o usuário autenticado
@@ -66,88 +70,107 @@ function MyListsPage() {
     }
   };
 
+  const breadcrumbItems = [
+    { label: "Minhas listas" }
+  ];
+
   if (isLoading) {
     return (
-      <div className="max-w-3xl mx-auto py-10 px-4">
-        <div className="flex justify-center">Carregando suas listas...</div>
-      </div>
+      <Layout showFooter={false}>
+        <div className="max-w-4xl mx-auto py-10 px-4">
+          <Breadcrumbs items={breadcrumbItems} />
+          <LoadingSpinner size="lg" text="Carregando suas listas..." />
+        </div>
+      </Layout>
     );
   }
 
   if (error) {
     return (
-      <div className="max-w-3xl mx-auto py-10 px-4">
-        <div className="flex justify-center text-red-500">
-          Erro ao carregar listas. Tente novamente.
+      <Layout showFooter={false}>
+        <div className="max-w-4xl mx-auto py-10 px-4">
+          <Breadcrumbs items={breadcrumbItems} />
+          <div className="text-center text-red-500">
+            Erro ao carregar listas. Tente novamente.
+          </div>
         </div>
-      </div>
+      </Layout>
     );
   }
 
   return (
-    <div className="max-w-3xl mx-auto py-10 px-4">
-      <div className="flex items-center justify-between mb-8">
-        <h1 className="text-3xl font-extrabold text-purple-800">Minhas listas</h1>
-        <Link to="/criar-lista">
-          <Button variant="default" className="gap-2">
-            <PlusCircle size={20} />Nova lista
-          </Button>
-        </Link>
-      </div>
-      
-      {lists.length === 0 ? (
-        <div className="text-center text-gray-600">
-          Você ainda não criou nenhuma lista.{" "}
-          <Link to="/criar-lista" className="text-purple-600 underline">
-            Criar agora
+    <Layout showFooter={false}>
+      <div className="max-w-4xl mx-auto py-6 px-4">
+        <Breadcrumbs items={breadcrumbItems} />
+        
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-8 gap-4">
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-purple-800">Minhas listas</h1>
+          <Link to="/criar-lista">
+            <Button className="gap-2 w-full sm:w-auto">
+              <PlusCircle size={20} />
+              Nova lista
+            </Button>
           </Link>
         </div>
-      ) : (
-        <ul className="space-y-5">
-          {lists.map(list => (
-            <li key={list.id} className="border rounded-xl bg-purple-50 p-5 flex flex-col sm:flex-row sm:items-center justify-between shadow-sm">
-              <div className="flex-1">
-                <Link to={`/lista/${list.id}`} className="font-bold text-lg text-purple-800 hover:underline">
-                  {list.title}
-                </Link>
-                {list.description && (
-                  <p className="text-gray-600 text-sm mt-1">{list.description}</p>
-                )}
-                <div className="flex items-center gap-4 mt-2">
-                  <span className="text-xs text-gray-400">
-                    Criada em {formatDate(list.created_at)}
-                  </span>
-                  {list.event_date && (
-                    <div className="flex items-center gap-1 text-xs text-purple-600">
-                      <Calendar size={12} />
-                      Evento: {formatDate(list.event_date)}
-                    </div>
+        
+        {lists.length === 0 ? (
+          <div className="text-center text-gray-600 py-20 bg-white rounded-xl">
+            <p className="text-lg mb-4">Você ainda não criou nenhuma lista.</p>
+            <Link to="/criar-lista">
+              <Button className="gap-2">
+                <PlusCircle size={20} />
+                Criar primeira lista
+              </Button>
+            </Link>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {lists.map(list => (
+              <div key={list.id} className="border rounded-xl bg-white p-4 sm:p-6 flex flex-col lg:flex-row lg:items-center justify-between shadow-sm hover:shadow-md transition-shadow gap-4">
+                <div className="flex-1 min-w-0">
+                  <Link to={`/lista/${list.id}`} className="font-bold text-lg text-purple-800 hover:underline block truncate">
+                    {list.title}
+                  </Link>
+                  {list.description && (
+                    <p className="text-gray-600 text-sm mt-1 line-clamp-2">{list.description}</p>
                   )}
+                  <div className="flex flex-wrap items-center gap-4 mt-2">
+                    <span className="text-xs text-gray-400">
+                      Criada em {formatDate(list.created_at)}
+                    </span>
+                    {list.event_date && (
+                      <div className="flex items-center gap-1 text-xs text-purple-600">
+                        <Calendar size={12} />
+                        Evento: {formatDate(list.event_date)}
+                      </div>
+                    )}
+                  </div>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  <Button variant="ghost" size="sm" onClick={() => handleCopy(list.id)} title="Copiar link">
+                    <Copy size={16} />
+                  </Button>
+                  <Link to={`/editar-lista/${list.id}`}>
+                    <Button variant="ghost" size="sm" title="Editar lista">
+                      <Edit size={16} />
+                    </Button>
+                  </Link>
+                  <Button variant="ghost" size="sm" onClick={() => handleDelete(list.id)} title="Excluir lista">
+                    <Trash2 size={16} />
+                  </Button>
+                  <Link to={`/lista/${list.id}`}>
+                    <Button size="sm" className="gap-1" title="Ver lista">
+                      <Share size={16} />
+                      Acessar
+                    </Button>
+                  </Link>
                 </div>
               </div>
-              <div className="flex gap-2 mt-4 sm:mt-0">
-                <Button variant="ghost" onClick={() => handleCopy(list.id)} title="Copiar link">
-                  <Copy size={18} />
-                </Button>
-                <Link to={`/editar-lista/${list.id}`}>
-                  <Button variant="ghost" title="Editar lista">
-                    <Edit size={18} />
-                  </Button>
-                </Link>
-                <Button variant="ghost" onClick={() => handleDelete(list.id)} title="Excluir lista">
-                  <Trash2 size={18} />
-                </Button>
-                <Link to={`/lista/${list.id}`}>
-                  <Button variant="secondary" className="gap-1" title="Ver lista">
-                    <Share size={16} />Acessar
-                  </Button>
-                </Link>
-              </div>
-            </li>
-          ))}
-        </ul>
-      )}
-    </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </Layout>
   );
 }
 

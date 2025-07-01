@@ -5,13 +5,16 @@ import { supabase } from "@/integrations/supabase/client";
 import { Gift, GiftList } from "../types/gift";
 import { GiftCard } from "../components/GiftCard";
 import { ListStats } from "../components/ListStats";
-import { GiftSearch } from "../components/GiftSearch";
 import { ShareButtons } from "../components/ShareButtons";
 import { ArrowLeft, Calendar, Users } from "lucide-react";
 import GiftItemForm from "../components/GiftItemForm";
 import { useState, useEffect, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/components/ui/use-toast";
+import Layout from "../components/Layout";
+import Breadcrumbs from "../components/Breadcrumbs";
+import GiftFilters from "../components/GiftFilters";
+import LoadingSpinner from "../components/LoadingSpinner";
 
 const fetchGiftList = async (id: string) => {
   // Busca dados da lista
@@ -23,7 +26,6 @@ const fetchGiftList = async (id: string) => {
   if (listError) throw listError;
   if (!list) throw new Error("Lista não encontrada");
 
-  // Busca presentes
   const { data: items, error: itemsError } = await supabase
     .from("gift_items")
     .select("*")
@@ -40,6 +42,7 @@ export default function GiftListPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [filter, setFilter] = useState<'all' | 'available' | 'reserved'>('all');
   const [sort, setSort] = useState<'name' | 'date' | 'status'>('name');
+  const [selectedCategory, setSelectedCategory] = useState("");
   
   const { data, error, isLoading } = useQuery({
     queryKey: ["gift-list", id, refreshIndex],
@@ -56,16 +59,35 @@ export default function GiftListPage() {
     getCurrentUser();
   }, []);
 
-  // Verifica se o usuário atual é o dono da lista
   const isOwner = currentUser && data?.list?.owner_id === currentUser.id;
 
-  // Filtrar e ordenar presentes
+  // Get unique categories from gifts
+  const availableCategories = useMemo(() => {
+    if (!data?.items) return [];
+    const categories = new Set<string>();
+    data.items.forEach(item => {
+      // Assume categories are stored in description or a separate field
+      // For now, we'll use some basic categorization
+      if (item.name.toLowerCase().includes('cozinha') || item.name.toLowerCase().includes('panela')) {
+        categories.add('Cozinha');
+      }
+      if (item.name.toLowerCase().includes('bebê') || item.name.toLowerCase().includes('fralda')) {
+        categories.add('Bebê');
+      }
+      if (item.name.toLowerCase().includes('casa') || item.name.toLowerCase().includes('decoração')) {
+        categories.add('Casa');
+      }
+    });
+    return Array.from(categories);
+  }, [data?.items]);
+
+  // Filter and sort gifts
   const filteredAndSortedGifts = useMemo(() => {
     if (!data?.items) return [];
     
     let filtered = data.items;
     
-    // Aplicar busca
+    // Apply search
     if (searchTerm) {
       filtered = filtered.filter(gift => 
         gift.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -73,14 +95,24 @@ export default function GiftListPage() {
       );
     }
     
-    // Aplicar filtro
+    // Apply category filter
+    if (selectedCategory) {
+      filtered = filtered.filter(gift => {
+        const name = gift.name.toLowerCase();
+        const category = selectedCategory.toLowerCase();
+        return name.includes(category) || 
+               (gift.description && gift.description.toLowerCase().includes(category));
+      });
+    }
+    
+    // Apply status filter
     if (filter === 'available') {
       filtered = filtered.filter(gift => !gift.reserver_name);
     } else if (filter === 'reserved') {
       filtered = filtered.filter(gift => gift.reserver_name);
     }
     
-    // Aplicar ordenação
+    // Apply sorting
     const sorted = [...filtered].sort((a, b) => {
       switch (sort) {
         case 'name':
@@ -97,7 +129,7 @@ export default function GiftListPage() {
     });
     
     return sorted;
-  }, [data?.items, searchTerm, filter, sort]);
+  }, [data?.items, searchTerm, filter, sort, selectedCategory]);
 
   const formatDate = (dateString: string | null) => {
     if (!dateString) return null;
@@ -108,66 +140,64 @@ export default function GiftListPage() {
     }
   };
 
-  const handleCopyLink = () => {
-    const url = window.location.href;
-    navigator.clipboard.writeText(url);
-    toast({ title: "Link copiado!", description: "O link da lista foi copiado para a área de transferência." });
-  };
-
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-purple-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Carregando lista de presentes...</p>
+      <Layout showFooter={false}>
+        <div className="max-w-4xl mx-auto py-10 px-4">
+          <LoadingSpinner size="lg" text="Carregando lista de presentes..." />
         </div>
-      </div>
+      </Layout>
     );
   }
 
   if (error) {
     return (
-      <div className="min-h-screen bg-purple-50 flex items-center justify-center">
-        <div className="text-center">
-          <p className="text-red-500 mb-4">Erro ao carregar lista de presentes.</p>
-          <Link to="/">
-            <Button variant="outline">Voltar ao início</Button>
-          </Link>
+      <Layout showFooter={false}>
+        <div className="max-w-4xl mx-auto py-10 px-4">
+          <div className="text-center">
+            <p className="text-red-500 mb-4">Erro ao carregar lista de presentes.</p>
+            <Link to="/">
+              <Button variant="outline">Voltar ao início</Button>
+            </Link>
+          </div>
         </div>
-      </div>
+      </Layout>
     );
   }
 
   if (!data?.list) {
     return (
-      <div className="min-h-screen bg-purple-50 flex items-center justify-center">
-        <div className="text-center">
-          <p className="text-gray-600 mb-4">Lista não encontrada.</p>
-          <Link to="/">
-            <Button variant="outline">Voltar ao início</Button>
-          </Link>
+      <Layout showFooter={false}>
+        <div className="max-w-4xl mx-auto py-10 px-4">
+          <div className="text-center">
+            <p className="text-gray-600 mb-4">Lista não encontrada.</p>
+            <Link to="/">
+              <Button variant="outline">Voltar ao início</Button>
+            </Link>
+          </div>
         </div>
-      </div>
+      </Layout>
     );
   }
 
   const reservedCount = data.items.filter(item => item.reserver_name).length;
   const totalCount = data.items.length;
-  const currentUrl = window.location.href;
+
+  const breadcrumbItems = [
+    { label: data.list.title }
+  ];
 
   return (
-    <div className="min-h-screen bg-purple-50">
-      <div className="max-w-4xl mx-auto py-10 px-4">
-        <Link to="/" className="inline-flex items-center gap-2 mb-6 text-gray-600 hover:text-purple-600 font-medium transition-colors">
-          <ArrowLeft size={20} /> Voltar
-        </Link>
+    <Layout showFooter={false}>
+      <div className="max-w-4xl mx-auto py-6 px-4">
+        <Breadcrumbs items={breadcrumbItems} />
         
         <div className="bg-white rounded-xl p-6 shadow-sm border mb-8">
           <div className="flex flex-col sm:flex-row sm:items-start justify-between mb-4 gap-4">
-            <h1 className="text-3xl font-bold text-purple-800">{data.list.title}</h1>
+            <h1 className="text-2xl sm:text-3xl font-bold text-purple-800">{data.list.title}</h1>
             <ShareButtons 
               listTitle={data.list.title}
-              listUrl={currentUrl}
+              listUrl={window.location.href}
             />
           </div>
           
@@ -196,7 +226,7 @@ export default function GiftListPage() {
           </div>
         </div>
         
-        {/* Estatísticas - apenas para o dono */}
+        {/* Statistics - owner only */}
         {isOwner && totalCount > 0 && (
           <ListStats gifts={data.items} />
         )}
@@ -208,18 +238,24 @@ export default function GiftListPage() {
           />
         )}
         
-        {/* Busca e filtros - apenas se houver presentes */}
+        {/* Filters - only if there are gifts */}
         {totalCount > 0 && (
-          <GiftSearch
-            onSearch={setSearchTerm}
-            onFilter={setFilter}
-            onSort={setSort}
-            currentFilter={filter}
-            currentSort={sort}
+          <GiftFilters
+            searchTerm={searchTerm}
+            onSearchChange={setSearchTerm}
+            filter={filter}
+            onFilterChange={setFilter}
+            sort={sort}
+            onSortChange={setSort}
+            categories={availableCategories}
+            selectedCategory={selectedCategory}
+            onCategoryChange={setSelectedCategory}
+            totalItems={totalCount}
+            filteredItems={filteredAndSortedGifts.length}
           />
         )}
         
-        <div className="grid md:grid-cols-2 gap-6">
+        <div className="grid sm:grid-cols-2 gap-6">
           {data.items.length === 0 ? (
             <div className="col-span-2 text-center text-gray-500 py-20 bg-white rounded-xl">
               <p className="text-lg mb-2">Ainda não há presentes cadastrados nesta lista.</p>
@@ -244,6 +280,6 @@ export default function GiftListPage() {
           )}
         </div>
       </div>
-    </div>
+    </Layout>
   );
 }
