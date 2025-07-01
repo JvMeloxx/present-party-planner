@@ -1,12 +1,14 @@
 
 import { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
-import { ArrowLeft, User, Mail, Bell, Shield } from "lucide-react";
+import { User, Mail, Bell, Shield, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import AuthenticatedLayout from "@/components/AuthenticatedLayout";
+import Breadcrumbs from "@/components/Breadcrumbs";
+import { Link } from "react-router-dom";
 
 export default function SettingsPage() {
   const [loading, setLoading] = useState(false);
@@ -50,38 +52,25 @@ export default function SettingsPage() {
     }
   };
 
-  const handleSignOut = async () => {
-    await supabase.auth.signOut();
-    window.location.href = "/";
-  };
-
-  if (!user) {
-    return (
-      <div className="min-h-screen bg-purple-50 flex items-center justify-center">
-        <div className="text-center">
-          <p className="text-gray-600 mb-4">Você precisa estar logado para acessar as configurações.</p>
-          <Link to="/auth">
-            <Button>Fazer login</Button>
-          </Link>
-        </div>
-      </div>
-    );
-  }
+  const breadcrumbItems = [
+    { label: "Configurações" }
+  ];
 
   return (
-    <div className="min-h-screen bg-purple-50">
-      <div className="max-w-2xl mx-auto py-10 px-4">
-        <Link to="/" className="inline-flex items-center gap-2 mb-6 text-gray-600 hover:text-purple-600 font-medium transition-colors">
-          <ArrowLeft size={20} /> Voltar
-        </Link>
+    <AuthenticatedLayout showFooter={false}>
+      <div className="max-w-4xl mx-auto py-6 px-4">
+        <Breadcrumbs items={breadcrumbItems} />
         
-        <div className="bg-white rounded-xl p-6 shadow-sm border">
-          <h1 className="text-3xl font-bold text-purple-800 mb-6 flex items-center gap-2">
+        <div className="mb-8">
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-purple-800 flex items-center gap-3">
             <User size={32} />
             Configurações
           </h1>
-          
-          <div className="space-y-6">
+          <p className="text-gray-600 mt-2">Gerencie suas informações pessoais e preferências</p>
+        </div>
+        
+        <div className="bg-white rounded-xl p-6 shadow-sm border">
+          <div className="space-y-8">
             {/* Perfil */}
             <div className="border-b pb-6">
               <h2 className="text-xl font-semibold text-gray-800 mb-4 flex items-center gap-2">
@@ -89,7 +78,7 @@ export default function SettingsPage() {
                 Perfil
               </h2>
               
-              <div className="space-y-4">
+              <div className="space-y-4 max-w-md">
                 <div>
                   <Label htmlFor="email">Email</Label>
                   <Input
@@ -133,7 +122,7 @@ export default function SettingsPage() {
               </h2>
               
               <div className="space-y-3">
-                <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
                   <div>
                     <p className="font-medium">Reservas de presentes</p>
                     <p className="text-sm text-gray-600">Receber email quando alguém reservar um presente</p>
@@ -143,7 +132,7 @@ export default function SettingsPage() {
                   </Button>
                 </div>
                 
-                <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
                   <div>
                     <p className="font-medium">Novos comentários</p>
                     <p className="text-sm text-gray-600">Receber notificações sobre comentários nas suas listas</p>
@@ -155,31 +144,24 @@ export default function SettingsPage() {
               </div>
             </div>
             
-            {/* Conta */}
+            {/* Informações da Conta */}
             <div>
               <h2 className="text-xl font-semibold text-gray-800 mb-4 flex items-center gap-2">
                 <Shield size={20} />
-                Conta
+                Informações da Conta
               </h2>
               
-              <div className="space-y-3">
-                <Button 
-                  variant="outline" 
-                  onClick={handleSignOut}
-                  className="w-full sm:w-auto"
-                >
-                  Sair da conta
-                </Button>
-                
-                <div className="text-sm text-gray-500">
-                  <p>Cadastrado em: {new Date(user.created_at).toLocaleDateString('pt-BR')}</p>
-                  <p>Último login: {new Date(user.last_sign_in_at).toLocaleDateString('pt-BR')}</p>
+              {user && (
+                <div className="space-y-2 text-sm text-gray-600 bg-gray-50 p-4 rounded-lg">
+                  <p><strong>Cadastrado em:</strong> {new Date(user.created_at).toLocaleDateString('pt-BR')}</p>
+                  <p><strong>Último login:</strong> {new Date(user.last_sign_in_at).toLocaleDateString('pt-BR')}</p>
+                  <p><strong>ID da conta:</strong> {user.id}</p>
                 </div>
-              </div>
+              )}
             </div>
           </div>
         </div>
       </div>
-    </div>
+    </AuthenticatedLayout>
   );
 }
