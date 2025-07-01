@@ -1,7 +1,11 @@
 
+import { useState, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
 import HowItWorks from "@/components/HowItWorks";
 import Testimonials from "@/components/Testimonials";
 import Layout from "@/components/Layout";
+import AuthenticatedLayout from "@/components/AuthenticatedLayout";
+import { AuthenticatedHome } from "@/components/AuthenticatedHome";
 
 // Imagem: celebração de presentes
 const heroImage =
@@ -10,6 +14,45 @@ const heroImage =
 const dummyListId = "00000000-0000-0000-0000-000000000001";
 
 const Index = () => {
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const checkAuth = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      setIsAuthenticated(!!session);
+      setLoading(false);
+    };
+
+    checkAuth();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setIsAuthenticated(!!session);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <span className="text-gray-600">Carregando...</span>
+      </div>
+    );
+  }
+
+  // Se estiver autenticado, mostrar dashboard
+  if (isAuthenticated) {
+    return (
+      <AuthenticatedLayout>
+        <div className="max-w-6xl mx-auto py-6 px-4">
+          <AuthenticatedHome />
+        </div>
+      </AuthenticatedLayout>
+    );
+  }
+
+  // Se não estiver autenticado, mostrar landing page
   return (
     <Layout>
       {/* Banner principal */}
@@ -24,10 +67,10 @@ const Index = () => {
               Gerencie, personalize e compartilhe suas listas para chá de panela, casa nova, bebê e muito mais. Zero complicação para você e seus convidados!
             </p>
             <a
-              href="/criar-lista"
+              href="/auth"
               className="inline-block bg-gradient-to-r from-pink-500 via-purple-500 to-purple-600 hover:scale-105 shadow-lg text-white px-6 sm:px-8 py-3 sm:py-4 rounded-full font-bold text-base sm:text-lg transition-all duration-200 animate-scale-in"
             >
-              Criar lista agora
+              Criar conta grátis
             </a>
           </div>
           <div className="flex-1 flex justify-center">

@@ -6,6 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { NotificationSystem } from "./NotificationSystem";
+import { GlobalSearch } from "./GlobalSearch";
 
 const UserNavigation = () => {
   const location = useLocation();
@@ -78,6 +79,7 @@ const UserNavigation = () => {
 
           {/* User Menu Desktop */}
           <div className="hidden md:flex items-center gap-2">
+            <GlobalSearch />
             <NotificationSystem />
             <Button
               variant="ghost"
@@ -92,6 +94,7 @@ const UserNavigation = () => {
 
           {/* Mobile Menu Button */}
           <div className="md:hidden flex items-center gap-2">
+            <GlobalSearch />
             <NotificationSystem />
             <Button variant="ghost" size="sm">
               <User size={20} />

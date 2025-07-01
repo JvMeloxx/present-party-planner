@@ -1,10 +1,8 @@
-
 import { useParams, Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Gift, GiftList } from "../types/gift";
 import { GiftCard } from "../components/GiftCard";
-import { ListStats } from "../components/ListStats";
 import { ShareButtons } from "../components/ShareButtons";
 import { ArrowLeft, Calendar, Users } from "lucide-react";
 import GiftItemForm from "../components/GiftItemForm";
@@ -15,6 +13,7 @@ import Layout from "../components/Layout";
 import Breadcrumbs from "../components/Breadcrumbs";
 import GiftFilters from "../components/GiftFilters";
 import LoadingSpinner from "../components/LoadingSpinner";
+import { QuickStats } from "../components/QuickStats";
 
 const fetchGiftList = async (id: string) => {
   // Busca dados da lista
@@ -226,9 +225,9 @@ export default function GiftListPage() {
           </div>
         </div>
         
-        {/* Statistics - owner only */}
-        {isOwner && totalCount > 0 && (
-          <ListStats gifts={data.items} />
+        {/* Quick Stats */}
+        {totalCount > 0 && (
+          <QuickStats gifts={data.items} eventDate={data.list.event_date} />
         )}
         
         {isOwner && (
