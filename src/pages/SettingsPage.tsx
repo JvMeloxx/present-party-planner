@@ -1,60 +1,65 @@
 
-import { useState, useEffect } from "react";
-import { User, Mail, Bell, Shield, ArrowLeft } from "lucide-react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import { toast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 import AuthenticatedLayout from "@/components/AuthenticatedLayout";
 import Breadcrumbs from "@/components/Breadcrumbs";
-import { Link } from "react-router-dom";
+import { ProfileSettings } from "@/components/ProfileSettings";
+import { 
+  Settings, 
+  Bell, 
+  Shield, 
+  Trash2, 
+  Eye,
+  Mail,
+  Smartphone 
+} from "lucide-react";
 
 export default function SettingsPage() {
-  const [loading, setLoading] = useState(false);
-  const [user, setUser] = useState<any>(null);
-  const [email, setEmail] = useState("");
-  const [displayName, setDisplayName] = useState("");
+  const [notifications, setNotifications] = useState({
+    email: true,
+    push: false,
+    newReservations: true,
+    weeklyDigest: false
+  });
 
-  useEffect(() => {
-    const getCurrentUser = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        setUser(user);
-        setEmail(user.email || "");
-        setDisplayName(user.user_metadata?.display_name || "");
-      }
-    };
-    getCurrentUser();
-  }, []);
-
-  const handleUpdateProfile = async () => {
-    setLoading(true);
-    try {
-      const { error } = await supabase.auth.updateUser({
-        data: { display_name: displayName }
-      });
-
-      if (error) throw error;
-
-      toast({
-        title: "Perfil atualizado!",
-        description: "Suas informações foram salvas com sucesso."
-      });
-    } catch (error: any) {
-      toast({
-        title: "Erro ao atualizar perfil",
-        description: error.message,
-        variant: "destructive"
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
+  const [privacy, setPrivacy] = useState({
+    publicProfile: false,
+    showEmail: false,
+    allowDuplication: true
+  });
 
   const breadcrumbItems = [
     { label: "Configurações" }
   ];
+
+  const handleNotificationChange = (key: string, value: boolean) => {
+    setNotifications(prev => ({ ...prev, [key]: value }));
+    toast.success("Configurações de notificação atualizadas");
+  };
+
+  const handlePrivacyChange = (key: string, value: boolean) => {
+    setPrivacy(prev => ({ ...prev, [key]: value }));
+    toast.success("Configurações de privacidade atualizadas");
+  };
+
+  const handleDeleteAccount = async () => {
+    if (window.confirm("Tem certeza que deseja excluir sua conta? Esta ação não pode ser desfeita.")) {
+      const confirmText = prompt("Digite 'EXCLUIR' para confirmar:");
+      if (confirmText === "EXCLUIR") {
+        try {
+          // Aqui você implementaria a lógica de exclusão da conta
+          toast.error("Funcionalidade de exclusão de conta em desenvolvimento");
+        } catch (error) {
+          toast.error("Erro ao excluir conta");
+        }
+      }
+    }
+  };
 
   return (
     <AuthenticatedLayout showFooter={false}>
@@ -62,104 +67,150 @@ export default function SettingsPage() {
         <Breadcrumbs items={breadcrumbItems} />
         
         <div className="mb-8">
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-purple-800 flex items-center gap-3">
-            <User size={32} />
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-purple-800 flex items-center gap-2">
+            <Settings size={32} />
             Configurações
           </h1>
-          <p className="text-gray-600 mt-2">Gerencie suas informações pessoais e preferências</p>
+          <p className="text-gray-600 mt-2">Gerencie suas preferências e configurações da conta</p>
         </div>
-        
-        <div className="bg-white rounded-xl p-6 shadow-sm border">
-          <div className="space-y-8">
-            {/* Perfil */}
-            <div className="border-b pb-6">
-              <h2 className="text-xl font-semibold text-gray-800 mb-4 flex items-center gap-2">
-                <User size={20} />
-                Perfil
-              </h2>
-              
-              <div className="space-y-4 max-w-md">
-                <div>
-                  <Label htmlFor="email">Email</Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    value={email}
-                    disabled
-                    className="bg-gray-100"
-                  />
-                  <p className="text-sm text-gray-500 mt-1">
-                    O email não pode ser alterado
-                  </p>
-                </div>
-                
-                <div>
-                  <Label htmlFor="displayName">Nome de exibição</Label>
-                  <Input
-                    id="displayName"
-                    type="text"
-                    value={displayName}
-                    onChange={(e) => setDisplayName(e.target.value)}
-                    placeholder="Como você gostaria de ser chamado?"
-                  />
-                </div>
-                
-                <Button 
-                  onClick={handleUpdateProfile}
-                  disabled={loading}
-                  className="w-full sm:w-auto"
-                >
-                  {loading ? "Salvando..." : "Salvar alterações"}
-                </Button>
-              </div>
-            </div>
-            
-            {/* Notificações */}
-            <div className="border-b pb-6">
-              <h2 className="text-xl font-semibold text-gray-800 mb-4 flex items-center gap-2">
-                <Bell size={20} />
+
+        <div className="space-y-6">
+          {/* Perfil */}
+          <ProfileSettings />
+
+          {/* Notificações */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Bell size={20} className="text-purple-600" />
                 Notificações
-              </h2>
-              
-              <div className="space-y-3">
-                <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-                  <div>
-                    <p className="font-medium">Reservas de presentes</p>
-                    <p className="text-sm text-gray-600">Receber email quando alguém reservar um presente</p>
-                  </div>
-                  <Button variant="outline" disabled>
-                    Em breve
-                  </Button>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Mail size={16} />
+                  <Label htmlFor="email-notifications">Notificações por email</Label>
                 </div>
-                
-                <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-                  <div>
-                    <p className="font-medium">Novos comentários</p>
-                    <p className="text-sm text-gray-600">Receber notificações sobre comentários nas suas listas</p>
-                  </div>
-                  <Button variant="outline" disabled>
-                    Em breve
+                <Switch
+                  id="email-notifications"
+                  checked={notifications.email}
+                  onCheckedChange={(value) => handleNotificationChange('email', value)}
+                />
+              </div>
+
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Smartphone size={16} />
+                  <Label htmlFor="push-notifications">Notificações push</Label>
+                </div>
+                <Switch
+                  id="push-notifications"
+                  checked={notifications.push}
+                  onCheckedChange={(value) => handleNotificationChange('push', value)}
+                />
+              </div>
+
+              <div className="flex items-center justify-between">
+                <div>
+                  <Label htmlFor="new-reservations">Novas reservas</Label>
+                  <p className="text-sm text-gray-500">Receber notificação quando alguém reservar um presente</p>
+                </div>
+                <Switch
+                  id="new-reservations"
+                  checked={notifications.newReservations}
+                  onCheckedChange={(value) => handleNotificationChange('newReservations', value)}
+                />
+              </div>
+
+              <div className="flex items-center justify-between">
+                <div>
+                  <Label htmlFor="weekly-digest">Resumo semanal</Label>
+                  <p className="text-sm text-gray-500">Receber um resumo das atividades das suas listas</p>
+                </div>
+                <Switch
+                  id="weekly-digest"
+                  checked={notifications.weeklyDigest}
+                  onCheckedChange={(value) => handleNotificationChange('weeklyDigest', value)}
+                />
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Privacidade */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Shield size={20} className="text-purple-600" />
+                Privacidade
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <Label htmlFor="public-profile">Perfil público</Label>
+                  <p className="text-sm text-gray-500">Permitir que outros vejam seu perfil</p>
+                </div>
+                <Switch
+                  id="public-profile"
+                  checked={privacy.publicProfile}
+                  onCheckedChange={(value) => handlePrivacyChange('publicProfile', value)}
+                />
+              </div>
+
+              <div className="flex items-center justify-between">
+                <div>
+                  <Label htmlFor="show-email">Mostrar email</Label>
+                  <p className="text-sm text-gray-500">Exibir seu email nas listas públicas</p>
+                </div>
+                <Switch
+                  id="show-email"
+                  checked={privacy.showEmail}
+                  onCheckedChange={(value) => handlePrivacyChange('showEmail', value)}
+                />
+              </div>
+
+              <div className="flex items-center justify-between">
+                <div>
+                  <Label htmlFor="allow-duplication">Permitir duplicação</Label>
+                  <p className="text-sm text-gray-500">Permitir que outros dupliquem suas listas públicas</p>
+                </div>
+                <Switch
+                  id="allow-duplication"
+                  checked={privacy.allowDuplication}
+                  onCheckedChange={(value) => handlePrivacyChange('allowDuplication', value)}
+                />
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Zona de Perigo */}
+          <Card className="border-red-200">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-red-600">
+                <Trash2 size={20} />
+                Zona de Perigo
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div>
+                  <h3 className="font-semibold text-red-600 mb-2">Excluir Conta</h3>
+                  <p className="text-sm text-gray-600 mb-4">
+                    Excluir permanentemente sua conta e todos os dados associados. Esta ação não pode ser desfeita.
+                  </p>
+                  <Button 
+                    variant="destructive" 
+                    onClick={handleDeleteAccount}
+                    className="gap-2"
+                  >
+                    <Trash2 size={16} />
+                    Excluir Conta
                   </Button>
                 </div>
               </div>
-            </div>
-            
-            {/* Informações da Conta */}
-            <div>
-              <h2 className="text-xl font-semibold text-gray-800 mb-4 flex items-center gap-2">
-                <Shield size={20} />
-                Informações da Conta
-              </h2>
-              
-              {user && (
-                <div className="space-y-2 text-sm text-gray-600 bg-gray-50 p-4 rounded-lg">
-                  <p><strong>Cadastrado em:</strong> {new Date(user.created_at).toLocaleDateString('pt-BR')}</p>
-                  <p><strong>Último login:</strong> {new Date(user.last_sign_in_at).toLocaleDateString('pt-BR')}</p>
-                  <p><strong>ID da conta:</strong> {user.id}</p>
-                </div>
-              )}
-            </div>
-          </div>
+            </CardContent>
+          </Card>
         </div>
       </div>
     </AuthenticatedLayout>

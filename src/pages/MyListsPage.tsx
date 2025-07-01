@@ -1,8 +1,7 @@
+
 import { useState } from "react";
-import { Link } from "react-router-dom";
-import { Copy, Edit, Trash2, PlusCircle, Share, Calendar } from "lucide-react";
+import { PlusCircle, Calendar } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { toast } from "@/components/ui/use-toast";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { GiftList } from "@/types/gift";
@@ -10,9 +9,11 @@ import AuthenticatedLayout from "@/components/AuthenticatedLayout";
 import Breadcrumbs from "@/components/Breadcrumbs";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import DashboardStats from "@/components/DashboardStats";
+import { ListActionButtons } from "@/components/ListActionButtons";
+import { Link } from "react-router-dom";
+import { toast } from "sonner";
 
 const fetchUserLists = async (): Promise<GiftList[]> => {
-  // Pega o usuário autenticado
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error("Usuário não autenticado");
   
@@ -34,12 +35,6 @@ function MyListsPage() {
     queryFn: fetchUserLists,
   });
 
-  const handleCopy = (listId: string) => {
-    const url = window.location.origin + "/lista/" + listId;
-    navigator.clipboard.writeText(url);
-    toast({ title: "Link copiado!", description: "O link da lista foi copiado para a área de transferência." });
-  };
-
   const handleDelete = async (listId: string) => {
     if (window.confirm("Tem certeza que deseja excluir esta lista?")) {
       const { error } = await supabase
@@ -48,15 +43,11 @@ function MyListsPage() {
         .eq("id", listId);
 
       if (error) {
-        toast({ 
-          title: "Erro ao excluir", 
-          description: error.message, 
-          variant: "destructive" 
-        });
+        toast.error("Erro ao excluir lista");
         return;
       }
 
-      toast({ title: "Lista excluída", description: "A lista foi excluída com sucesso." });
+      toast.success("Lista excluída com sucesso!");
       setRefreshIndex(i => i + 1);
     }
   };
@@ -154,25 +145,12 @@ function MyListsPage() {
                       )}
                     </div>
                   </div>
-                  <div className="flex flex-wrap gap-2">
-                    <Button variant="ghost" size="sm" onClick={() => handleCopy(list.id)} title="Copiar link">
-                      <Copy size={16} />
-                    </Button>
-                    <Link to={`/editar-lista/${list.id}`}>
-                      <Button variant="ghost" size="sm" title="Editar lista">
-                        <Edit size={16} />
-                      </Button>
-                    </Link>
-                    <Button variant="ghost" size="sm" onClick={() => handleDelete(list.id)} title="Excluir lista">
-                      <Trash2 size={16} />
-                    </Button>
-                    <Link to={`/lista/${list.id}`}>
-                      <Button size="sm" className="gap-1" title="Ver lista">
-                        <Share size={16} />
-                        Acessar
-                      </Button>
-                    </Link>
-                  </div>
+                  
+                  <ListActionButtons
+                    list={list}
+                    onDelete={handleDelete}
+                    onUpdated={() => setRefreshIndex(i => i + 1)}
+                  />
                 </div>
               ))}
             </div>

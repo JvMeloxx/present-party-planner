@@ -4,7 +4,8 @@ import { User, Plus, List, Settings, LogOut, Home } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
-import { toast } from "@/components/ui/use-toast";
+import { toast } from "sonner";
+import { NotificationSystem } from "./NotificationSystem";
 
 const UserNavigation = () => {
   const location = useLocation();
@@ -12,7 +13,7 @@ const UserNavigation = () => {
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
-    toast({ title: "Logout realizado com sucesso!" });
+    toast.success("Logout realizado com sucesso!");
     navigate("/");
   };
 
@@ -77,6 +78,7 @@ const UserNavigation = () => {
 
           {/* User Menu Desktop */}
           <div className="hidden md:flex items-center gap-2">
+            <NotificationSystem />
             <Button
               variant="ghost"
               size="sm"
@@ -89,7 +91,8 @@ const UserNavigation = () => {
           </div>
 
           {/* Mobile Menu Button */}
-          <div className="md:hidden">
+          <div className="md:hidden flex items-center gap-2">
+            <NotificationSystem />
             <Button variant="ghost" size="sm">
               <User size={20} />
             </Button>
